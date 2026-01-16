@@ -2,6 +2,9 @@
 
 ## 1. 分配给套接字的IP地址与端口号
 
+IP是Internet Protocol（网络协议）的简写，是为收发网络数据而分配给计算机的值。
+端口号是为区分程序中创建的套接字而分配给套接字的序号。
+
 ### *1. 网络地址*
 
 IP地址分两类：
@@ -16,6 +19,12 @@ IP地址分两类：
 - C类地址的首字节范围：192\~223，即前3位以110开始。
 
 CIDR了解一下？
+
+CIDR（Classless Inter-Domain Routing，无分类域间路由） 是为了解决上述“分类地址”带来的资源浪费而引入的技术。
+
+- 区别：传统的分类地址（如资料中所述）强制网络掩码只能是 8、16 或 24 位；而 CIDR 允许使用任意长度的网络前缀。
+- 表示法：CIDR 通常采用斜线记法（如 192.168.1.0/24），其中的 /24 表示前 24 位是网络号。
+- 意义：它极大地提高了 IP 地址的分配效率，是目前互联网路由的基础技术。
 
 ### *3. 用于区分套接字的端口号*
 
@@ -42,18 +51,18 @@ struct in_addr
 
 数据类型参考如下POSIX定义表。
 
-|数据类型名称|数据类型说明|声明的头文件|
-| :------------: | :------------------------: | :--------------: |
-|int8_t|signed 8 bit int|sys/types.h|
-|uint8_t|unsigned 8 bit int(char)|sys/types.h|
-|int16_t|signed 16 bit int|sys/types.h|
-|uint16_t|unsigned 16 bit int(unsigned short)|sys/types.h|
-|int32_t|signed 32 bit int|sys/types.h|
-|uint32_t|unsigned 32 bit int(unsigned long)|sys/types.h|
-|sa_family_t|地址族(Address Family)|sys/socket.h|
-|socklen_t|长度(length of struct)|sys/socket.h|
-|in_addr_t|IP地址，声明为uint32_t|netinet/in.h|
-|in_port_t|端口号，声明为uint16_t|netinet/in.h|
+| 数据类型名称 |            数据类型说明             | 声明的头文件 |
+| :----------: | :---------------------------------: | :----------: |
+|    int8_t    |          signed 8 bit int           | sys/types.h  |
+|   uint8_t    |      unsigned 8 bit int(char)       | sys/types.h  |
+|   int16_t    |          signed 16 bit int          | sys/types.h  |
+|   uint16_t   | unsigned 16 bit int(unsigned short) | sys/types.h  |
+|   int32_t    |          signed 32 bit int          | sys/types.h  |
+|   uint32_t   | unsigned 32 bit int(unsigned long)  | sys/types.h  |
+| sa_family_t  |       地址族(Address Family)        | sys/socket.h |
+|  socklen_t   |       长度(length of struct)        | sys/socket.h |
+|  in_addr_t   |       IP地址，声明为uint32_t        | netinet/in.h |
+|  in_port_t   |       端口号，声明为uint16_t        | netinet/in.h |
 
 ### 2. 结构体 `sockaddr_in` 的成员分析
 
@@ -61,11 +70,11 @@ struct in_addr
 
 每种协议适用的地址族均不同。比如，IPv4使用4字节地址族，IPv6使用16字节地址族。
 
-|地址族|含义|
-| :---------: | :-----------------------: |
-|AF_INET|IPv4网络协议中使用的地址族|
-|AF_INET6|IPv6网络协议中使用的地址族|
-|AF_LOCAL|本地通信中采用的UNIX协议的地址族|
+|  地址族  |               含义               |
+| :------: | :------------------------------: |
+| AF_INET  |    IPv4网络协议中使用的地址族    |
+| AF_INET6 |    IPv6网络协议中使用的地址族    |
+| AF_LOCAL | 本地通信中采用的UNIX协议的地址族 |
 
 #### *2. 成员 `sin_port`*
 
