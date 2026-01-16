@@ -9,43 +9,42 @@
 ```c
 #include <sys/socket.h>
 int socket(int domain, int type, int protocol);
-// Create a new socket of type TYPE in domain DOMAIN, using
-// protocol PROTOCOL. If PROTOCOL is zero, one is chosen automatically.
-// Returns a file descriptor for the new socket, or -1 for errors.
+// 在域 DOMAIN 中创建一个类型为 TYPE 的新套接字，使用协议 PROTOCOL。
+// 若 PROTOCOL 为零，则自动选择合适的协议。
+// 返回新套接字的文件描述符，出错时返回 -1。
 ```
 
-2. 调用 `bind` 函数分配IP地址和端口号。
+1. 调用 `bind` 函数分配IP地址和端口号。
 
 ```c
 #include <sys/socket.h>
 int bind(int __fd, const struct sockaddr *__addr, socklen_t __len);
-// Give the socket FD the local address ADDR (which is LEN bytes long).
+// 将套接字文件描述符绑定到本地地址ADDR（长度为LEN字节）。
 // 成功时返回0，失败时返回-1。
 ```
 
-3. 调用 `listen` 函数转为可接受请求的状态。
+1. 调用 `listen` 函数转为可接受请求的状态。
 
 ```c
 #include <sys/socket.h>
 int listen(int __fd, int __n);
-// Prepare to accept connections on socket FD.
-// N connection requests will be queued before further requests are refused.
-// Returns 0 on success, -1 for errors.
+// 准备在套接字FD上接受连接。
+// 在后续连接请求被拒绝前，将有N个连接请求排队等待。
+// 成功时返回0，出错时返回-1。
 ```
 
-4. 调用 `accept` 函数受理连接请求。
+1. 调用 `accept` 函数受理连接请求。
 
 ```c
 #include <sys/socket.h>
 int accept(int __fd, struct sockaddr *__restrict__ __addr, socklen_t *__restrict__ __addr_len);
-// Await a connection on socket FD.
-// When a connection arrives, open a new socket to communicate with it,
-// set *ADDR (which is *ADDR_LEN bytes long) to the address of the connecting
-// peer and *ADDR_LEN to the address's actual length, and return the
-// new socket's descriptor, or -1 for errors.
+// 在套接字FD上等待连接。
+// 当连接到达时，打开一个新套接字进行通信，
+// 将*ADDR（长度为*ADDR_LEN字节）设置为连接对端的地址，
+// 并将*ADDR_LEN设置为地址的实际长度，然后返回新套接字的描述符，
+// 若出现错误则返回-1。
 
-// This function is a cancellation point and therefore not marked with
-// __THROW.
+// 此函数为取消点，因此未使用__THROW标记。
 ```
 
 服务器程序：[hello_server.c](./hello_server.c)
@@ -54,13 +53,11 @@ int accept(int __fd, struct sockaddr *__restrict__ __addr, socklen_t *__restrict
 
 ```c
 int connect(int __fd, const struct sockaddr *__addr, socklen_t __len)
-// Open a connection on socket FD to peer at ADDR (which LEN bytes long).
-// For connectionless socket types, just set the default address to send to
-// and the only address from which to accept transmissions.
-// Return 0 on success, -1 for errors.
+// 在套接字FD上打开一个连接到对等地址ADDR（长度为LEN字节）。
+// 对于无连接套接字类型，仅设置默认发送地址和唯一接受传输的地址。
+// 成功返回0，错误返回-1。
 
-// This function is a cancellation point and therefore not marked with
-// __THROW.
+// 此函数是一个取消点，因此未标记为__THROW。
 ```
 
 客户端程序：[hello_client.c](./hello_client.c)
@@ -98,10 +95,9 @@ int close(int fd);
 ```c
 #include <unistd.h>
 ssize_t write(int __fd, const void *__buf, size_t __n)
-// Write N bytes of BUF to FD. Return the number written, or -1.
+// 将BUF的N个字节写入FD。返回写入的字节数，若出错则返回-1。
 
-// This function is a cancellation point and therefore not marked with
-// __THROW.
+// 此函数为取消点，因此未标记为__THROW。
 ```
 
 > **知识补给站：**`size_t` 是通过 `typedef` 定义的 `unsigned int` 类型。`ssize_t` 前面多加的s代表signed，即 `ssize_t` 是通过 `typedef` 定义的 `signed int` 类型。这些类型都是基本数据类型的别名。
@@ -112,11 +108,10 @@ ssize_t write(int __fd, const void *__buf, size_t __n)
 ```c
 #include <unistd.h>
 ssize_t read(int __fd, void *__buf, size_t __nbytes)
-// Read NBYTES into BUF from FD. Return the
-// number read, -1 for errors or 0 for EOF.
+// 从文件描述符FD读取NBYTES字节到缓冲区BUF。返回实际读取的字节数，
+// 出错时返回-1，到达文件末尾时返回0。
 
-// This function is a cancellation point and therefore not marked with
-// __THROW.
+// 此函数是一个取消点，因此未使用__THROW标记。
 ```
 
 [low_read.c](./low_read.c)
