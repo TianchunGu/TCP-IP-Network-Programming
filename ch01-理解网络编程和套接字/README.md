@@ -14,7 +14,7 @@ int socket(int domain, int type, int protocol);
 // 返回新套接字的文件描述符，出错时返回 -1。
 ```
 
-1. 调用 `bind` 函数分配IP地址和端口号。
+2. 调用 `bind` 函数分配IP地址和端口号。
 
 ```c
 #include <sys/socket.h>
@@ -23,7 +23,7 @@ int bind(int __fd, const struct sockaddr *__addr, socklen_t __len);
 // 成功时返回0，失败时返回-1。
 ```
 
-1. 调用 `listen` 函数转为可接受请求的状态。
+3. 调用 `listen` 函数转为可接受请求的状态。
 
 ```c
 #include <sys/socket.h>
@@ -33,7 +33,7 @@ int listen(int __fd, int __n);
 // 成功时返回0，出错时返回-1。
 ```
 
-1. 调用 `accept` 函数受理连接请求。
+4. 调用 `accept` 函数受理连接请求。
 
 ```c
 #include <sys/socket.h>
@@ -77,10 +77,14 @@ int open(const char *__file, int __oflag, ...)
 
 [low_open.c](./low_open.c)
 
-|打开模式|含义|
-| :----------: | :---------------------: |
-|O_CREAT|必要时创建文件|
-|O_TRUNC|删除全部现有数据|
+| 打开模式 | 含义                       |
+| -------- | -------------------------- |
+| O_CREAT  | 必要时创建文件             |
+| O_TRUNC  | 删除全部现有数据           |
+| O_APPEND | 维持现有数据，保存到其后面 |
+| O_RDONLY | 只读打开                   |
+| O_WRONLY | 只写打开                   |
+| O_RDWR   | 读写打开                   |
 
 ### *2. 关闭文件*
 
