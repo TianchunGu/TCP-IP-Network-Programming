@@ -1,6 +1,10 @@
 # ch03 地址族与数据序列
 
+第三章的逻辑链条是：知道什么是IP和端口 -> 建立结构体来容纳它们 -> 统一数据存储顺序（字节序） -> 将人类易读的IP转为机器识别的IP -> 最后通过 bind 将这些信息绑定给套接字。
+
 ## 1. 分配给套接字的IP地址与端口号
+
+要进行网络通信，必须解决两个问题：找到计算机（IP地址）、找到计算机里的特定程序（端口号）。
 
 IP是Internet Protocol（网络协议）的简写，是为收发网络数据而分配给计算机的值。
 端口号是为区分程序中创建的套接字而分配给套接字的序号。
@@ -33,6 +37,8 @@ CIDR（Classless Inter-Domain Routing，无分类域间路由） 是为了解决
 ## 2. 地址信息的表示
 
 ### *1. 表示IPv4地址的结构体*
+
+struct sockaddr_in：这是专门用于IPv4地址的结构体。需要在一个结构体变量中填入地址族（AF_INET）、IP地址和端口号。
 
 ```c
 struct sockaddr_in
@@ -116,9 +122,9 @@ struct sockaddr
 
 ### *2. 字节序转换（Endian Conversations）*
 
-- htons
+- htons （Host to Network Short，用于端口）
 - ntohs
-- htonl
+- htonl （Host to Network Long，用于IP）
 - ntohl
 
 其中，h代表主机（host）字节序，n代表网络（network）字节序。s 指的是short(unsigned short)，l指的是long(unsigned long，Linux中long占4个字节)。比如，`htons` 是把short型数据从主机字节序转换为网络字节序。  
@@ -228,3 +234,23 @@ serv_addr.sin_addr.s_addr = htonl(INADDR_ANY);
 ```
 
 利用常数 `INADDR_ANY` 分配服务器端的IP地址。若采用这种方法，则可自动获取运行服务器端的IP地址，不必亲自输入。而且，若同一计算机中已分配多个IP地址（多宿主(Multi-homed)计算机，一般路由器属于这一类），则只要端口号一致，就可以从不同IP地址接收数据信息。因此，服务器端优先考虑这种方式。而客户端中除非带有一部分服务器端功能，否则不会采用。
+
+## 5. 服务器端常见套接字初始化过程
+
+```c
+int serv_sock;
+struct sockaddr_in serv_addr;
+char * serv_port = "9190";
+
+/* 创建服务器端套接字（监听套接字） */
+serv_sock = socket(PF_INET, SOCK_STREAM, 0);
+
+/* 地址信息初始化 */
+memset(&serv_addr, 0, sizeof(serv_addr));
+serv_addr.sin_family = AF_INET;
+serv_addr.sin_addr.s_addr = htonl(INADDR_ANY);
+serv_addr.sin_port = htons(atoi(serv_port));
+
+/* 分配地址信息 */
+bind(serv_sock, (struct sockaddr *)&serv_addr, sizeof(serv_addr));
+```
