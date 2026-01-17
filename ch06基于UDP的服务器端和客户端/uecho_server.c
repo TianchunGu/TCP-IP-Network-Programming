@@ -9,15 +9,17 @@
 void error_handling(char* message);  // 错误处理函数：输出错误并退出
 
 int main(int argc, char* argv[]) {
-  int serv_sock;  // 服务器 UDP socket（用于接收/发送数据报）
-  char
-      message[BUF_SIZE];  // 接收缓冲区：存放收到的 UDP 数据报内容（原始字节流）
-  int str_len;            // recvfrom 返回的“实际接收字节数”（失败为 -1）
+  // 服务器 UDP socket（用于接收/发送数据报）
+  int serv_sock;
+  // 接收缓冲区：存放收到的 UDP 数据报内容（原始字节流）
+  char message[BUF_SIZE];
+  // recvfrom 返回的“实际接收字节数”（失败为 -1）
+  int str_len;
 
-  struct sockaddr_in serv_addr,
-      clnt_addr;  // serv_addr：本机绑定地址；clnt_addr：客户端地址（recvfrom
-                  // 填充）
-  socklen_t clnt_addr_sz;  // 客户端地址结构体大小（recvfrom 需要输入/输出）
+  // serv_addr：本机绑定地址；clnt_addr：客户端地址（recvfrom填充）
+  struct sockaddr_in serv_addr, clnt_addr;
+  // 客户端地址结构体大小（recvfrom 需要输入/输出）
+  socklen_t clnt_addr_sz;
 
   // -------------------------
   // 参数检查：必须提供监听端口号
