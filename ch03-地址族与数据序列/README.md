@@ -249,6 +249,7 @@ serv_sock = socket(PF_INET, SOCK_STREAM, 0);
 memset(&serv_addr, 0, sizeof(serv_addr));
 serv_addr.sin_family = AF_INET;
 serv_addr.sin_addr.s_addr = htonl(INADDR_ANY);
+// 端口号通过atoi转换为整数，再由htons转换为网络字节序
 serv_addr.sin_port = htons(atoi(serv_port));
 
 /* 分配地址信息 */

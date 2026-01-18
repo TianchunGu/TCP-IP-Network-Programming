@@ -42,13 +42,13 @@ int main(int argc, char* argv[]) {
   // sin_family：IPv4
   // sin_addr.s_addr：绑定任意网卡地址（INADDR_ANY），需要转成网络字节序
   // sin_port：绑定端口（argv[1]），需要转成网络字节序
-  //
-  // ⚠️ 隐患1：atoi 不做错误检查，非数字/溢出会导致端口异常（例如返回 0）
-  // ⚠️ 隐患2：端口为 0 表示由系统分配随机端口，可能不是你想要的
   // -------------------------
   memset(&my_addr, 0, sizeof(my_addr));
   my_addr.sin_family = AF_INET;
+  //INADDR_ANY：这是一个常数（整数值），表示“自动获取本机所有可用的 IP 地址”。它允许服务器从计算机的任何网卡接收数据，而不需要硬编码具体的 IP。
+  //INADDR_ANY 本质上是一个 32 位的无符号长整型（Long）常数。为了将其存入套接字结构体并用于网络通信，必须将其从主机字节序转换为网络字节序。因此使用 htonl (Host to Network Long)
   my_addr.sin_addr.s_addr = htonl(INADDR_ANY);
+  // 端口号通过atoi转换为整数，再由htons转换为网络字节序
   my_addr.sin_port = htons(atoi(argv[1]));
 
   // -------------------------
@@ -66,7 +66,6 @@ int main(int argc, char* argv[]) {
   // -------------------------
   for (int i = 0; i < 3; i++) {
     // 每次接收前先 sleep 5 秒
-    // ⚠️ 隐患：人为延迟会降低响应性；如果想周期性处理，可考虑超时/事件驱动等
     sleep(5);
 
     // recvfrom 需要传入地址结构体长度
@@ -81,27 +80,11 @@ int main(int argc, char* argv[]) {
     // flags=0：默认阻塞接收
     // (struct sockaddr*)&your_addr：返回发送方地址
     // &addr_sz：输入为结构体大小，输出为实际地址长度
-    //
-    // ⚠️ 隐患1（非常关键）：recvfrom 返回的字节流不保证以 '\0' 结尾。
-    //   但下面 printf 用 %s 当 C 字符串打印，可能：
-    //   - 打印越界（一直打印到内存中偶然出现 '\0'）
-    //   - 泄露栈上数据/输出乱码
-    //   - 触发未定义行为
-    //
-    // ⚠️ 隐患2：如果发送的 datagram 长度 > BUF_SIZE，会被截断，只保留前 BUF_SIZE
-    // 字节；
-    //   但 str_len 仍返回“实际拷贝到缓冲区的字节数”，无法恢复剩余内容。
-    //
-    // ⚠️ 隐患3：未检查 str_len 是否为 -1（出错）；
-    //   也未检查 str_len==0 的情况（UDP 一般也可能收到 0 长度数据报）。
     // -------------------------
     str_len = recvfrom(sock, message, BUF_SIZE, 0, (struct sockaddr*)&your_addr,
                        &addr_sz);
-
     // -------------------------
     // 打印收到的第 i+1 条消息
-    // ⚠️ 隐患：如上所述，message 可能不是字符串，使用 %s 存在越界风险
-    // ⚠️ 另外：即使发送方发送了 '\0'，如果刚好填满 BUF_SIZE，也可能无终止符
     // -------------------------
     printf("Message %d:%s \n", i + 1, message);
   }
