@@ -1,132 +1,84 @@
-#include <arpa/inet.h>  // htonl, htons, sockaddr_in：字节序转换、IPv4 地址结构
-#include <stdio.h>      // printf, fputs：标准 I/O
-#include <stdlib.h>     // exit, atoi：退出程序、字符串转整数（端口）
-#include <string.h>     // memset：内存清零
-#include <sys/socket.h>  // socket, bind, recvfrom, sendto：UDP 套接字相关系统调用
-#include <unistd.h>      // close：关闭文件描述符
+#include <stdio.h>      // 标准输入输出：printf / fputs / fputc 等
+#include <stdlib.h>     // 标准库：exit / atoi 等
+#include <string.h>     // 字符串/内存操作：memset 等
+#include <unistd.h>     // POSIX：close 等
+#include <arpa/inet.h>  // 网络字节序转换：htonl / htons 等
+#include <sys/socket.h> // 套接字 API：socket / bind / sendto / recvfrom 等
 
-#define BUF_SIZE 30  // 接收缓冲区大小：一次最多接收 30 字节（可能会截断）
-void error_handling(char* message);  // 错误处理函数：输出错误并退出
+#define BUF_SIZE 30                 // 收发缓冲区大小（一次最多接收 30 字节）
+void error_handling(char *message); // 错误处理函数声明：输出错误信息并退出
 
-int main(int argc, char* argv[]) {
-  // 服务器 UDP socket（用于接收/发送数据报）
-  int serv_sock;
-  // 接收缓冲区：存放收到的 UDP 数据报内容（原始字节流）
-  char message[BUF_SIZE];
-  // recvfrom 返回的“实际接收字节数”（失败为 -1）
-  int str_len;
+int main(int argc, char* argv[])
+{
+    int serv_sock;              // 服务器端 UDP 套接字（文件描述符）
+    char message[BUF_SIZE];     // 用于接收/发送数据报的缓冲区
+    int str_len;                // 实际接收到的数据长度（字节数）
 
-  // serv_addr：本机绑定地址；clnt_addr：客户端地址（recvfrom填充）
-  struct sockaddr_in serv_addr, clnt_addr;
-  // 客户端地址结构体大小（recvfrom 需要输入/输出）
-  socklen_t clnt_addr_sz;
+    struct sockaddr_in serv_addr, clnt_addr; // serv_addr：服务器绑定地址；clnt_addr：客户端地址（用于回包）
+    socklen_t clnt_addr_sz;                  // clnt_addr 结构体大小（recvfrom/sendto 需要）
 
-  // -------------------------
-  // 参数检查：必须提供监听端口号
-  // -------------------------
-  if (argc != 2) {
-    printf("Usage: %s <port>\n", argv[0]);
-    exit(1);
-  }
+    // 参数检查：服务器端只需要一个参数 —— 监听端口
+    // argv[1] = port（如 9190）
+    if(argc != 2)
+    {
+        printf("Usage: %s <port>\n", argv[0]);
+        exit(1); // 参数不对直接退出
+    }
 
-  // -------------------------
-  // 创建 UDP socket
-  // PF_INET：IPv4
-  // SOCK_DGRAM：UDP 数据报（无连接、保留消息边界）
-  // protocol=0：让系统选择默认协议（UDP）
-  // -------------------------
-  serv_sock = socket(PF_INET, SOCK_DGRAM, 0);
-  if (serv_sock == -1)
-    error_handling("socket() error");
+    // 创建 UDP 套接字：
+    // PF_INET    : IPv4
+    // SOCK_DGRAM : UDP 数据报
+    // 0          : 由系统选择 UDP 协议（IPPROTO_UDP）
+    serv_sock = socket(PF_INET, SOCK_DGRAM, 0);
+    if(serv_sock == -1)
+        error_handling("socket() error"); // 创建失败则退出
 
-  // -------------------------
-  // 初始化服务器地址并准备绑定
-  // memset 清零：避免结构体中未初始化字段影响 bind
-  // sin_family：IPv4
-  // sin_addr.s_addr：INADDR_ANY
-  // 表示绑定本机任意网卡地址（0.0.0.0），需要转网络序 sin_port：绑定端口（从
-  // argv[1] 解析），需要转网络序
-  //
-  // ⚠️ 隐患1：atoi 不检查合法性，非数字会得到 0；端口 0
-  // 表示系统随机分配端口（通常不是想要的） ⚠️
-  // 隐患2：未检查端口范围（1~65535），溢出/负值等都可能导致异常行为
-  // -------------------------
-  memset(&serv_addr, 0, sizeof(serv_addr));
-  serv_addr.sin_family = AF_INET;
-  serv_addr.sin_addr.s_addr = htonl(INADDR_ANY);
-  serv_addr.sin_port = htons(atoi(argv[1]));
+    // 初始化服务器地址结构体为 0，避免未初始化字段带来问题
+    memset(&serv_addr, 0, sizeof(serv_addr));
+    serv_addr.sin_family = AF_INET;               // IPv4
+    serv_addr.sin_addr.s_addr = htonl(INADDR_ANY);// 绑定到本机所有网卡地址（0.0.0.0）
+                                                   // INADDR_ANY 是主机字节序常量，需要 htonl 转网络字节序
+    serv_addr.sin_port = htons(atoi(argv[1]));    // 设置监听端口：atoi 转 int，htons 转网络字节序
 
-  // -------------------------
-  // bind：将 UDP socket 绑定到本机端口
-  // 绑定后才能在该端口上接收数据报
-  // -------------------------
-  if (bind(serv_sock, (struct sockaddr*)&serv_addr, sizeof(serv_addr)) == -1)
-    error_handling("bind() error");
+    // bind：将套接字与本地 IP/端口绑定，这样客户端才能把 UDP 数据报发到该端口
+    // 若不 bind，服务器端将不知道监听哪个端口（通常会随机分配，不符合服务器需求）
+    if(bind(serv_sock, (struct sockaddr*)&serv_addr, sizeof(serv_addr)) == -1)
+        error_handling("bind() error");
 
-  // -------------------------
-  // 主循环：不断接收客户端发来的数据报，并把收到的数据原样回发（echo）
-  //
-  // ⚠️ 隐患3：while(1) 死循环没有退出条件，close(serv_sock) 实际上永远执行不到
-  //   - 真实服务一般需要信号处理（SIGINT/SIGTERM）或设置运行条件
-  // -------------------------
-  while (1) {
-    // 每次接收前都要把 clnt_addr_sz 设置为结构体大小
-    // recvfrom 会把发送方地址写入 clnt_addr，并更新 clnt_addr_sz
-    clnt_addr_sz = sizeof(clnt_addr);
+    // 主循环：不断接收客户端数据，并把收到的数据原样发回（UDP 回显服务器）
+    while (1)
+    {
+        // 准备接收：clnt_addr_sz 需要先设置为 clnt_addr 的大小
+        // recvfrom 会把“发送方地址信息”写入 clnt_addr，并可能更新 clnt_addr_sz
+        clnt_addr_sz = sizeof(clnt_addr);
 
-    // -------------------------
-    // recvfrom：阻塞等待接收 UDP 数据报
-    // 参数：
-    // serv_sock：监听 socket
-    // message：接收缓冲区
-    // BUF_SIZE：最多接收 BUF_SIZE 字节
-    // flags=0：默认阻塞
-    // &clnt_addr：返回发送方地址
-    // &clnt_addr_sz：输入为 clnt_addr 大小，输出为实际地址长度
-    //
-    // ⚠️ 隐患4：未检查返回值 str_len
-    //   - str_len == -1：接收失败（可能被信号打断 EINTR，或其他错误）
-    //   - str_len == 0：收到 0 长度数据报（也是可能的）
-    //
-    // ⚠️ 隐患5：如果客户端发送的数据报长度 > BUF_SIZE，会被截断，只保留前
-    // BUF_SIZE 字节；
-    //   UDP 的“多出来部分”会被丢弃，无法在后续 recvfrom 中继续读取（与 TCP
-    //   不同）。
-    //
-    // ⚠️ 隐患6：message 是“原始字节缓冲区”，并不保证包含 '\0' 结尾；
-    //   虽然这里没有用 %s 打印，但如果后续改成字符串处理，必须注意补 '\0'
-    //   或按长度处理。
-    // -------------------------
-    str_len = recvfrom(serv_sock, message, BUF_SIZE, 0,
-                       (struct sockaddr*)&clnt_addr, &clnt_addr_sz);
+        // recvfrom：接收一个 UDP 数据报
+        // serv_sock                   : 监听套接字
+        // message, BUF_SIZE           : 接收缓冲区与最大长度
+        // 0                           : flags（通常为 0）
+        // (struct sockaddr*)&clnt_addr: 输出参数，保存客户端地址（IP/端口）
+        // &clnt_addr_sz               : 输入/输出参数，地址结构体长度
+        // 返回值 str_len 为接收到的字节数（可能为 0，也可能小于 BUF_SIZE）
+        str_len = recvfrom(serv_sock, message, BUF_SIZE, 0,
+            (struct sockaddr*)&clnt_addr, &clnt_addr_sz);
 
-    // -------------------------
-    // sendto：把收到的数据原样回发给发送方（回显）
-    // 发送长度使用 str_len，确保“回发与收到长度一致”
-    //
-    // ⚠️ 隐患7：同样未检查 sendto 返回值：
-    //   - 失败返回 -1
-    //   - UDP
-    //   虽然通常“要么发出去要么失败”，但仍建议检查以发现错误（如网络不可达等）
-    //
-    // ⚠️ 隐患8：UDP 不保证可靠性/顺序/去重：
-    //   - 客户端不一定收到回显
-    //   - 可能乱序或重复
-    // -------------------------
-    sendto(serv_sock, message, str_len, 0, (struct sockaddr*)&clnt_addr,
-           clnt_addr_sz);
-  }
+        // sendto：把收到的数据原样发送回去（回显）
+        // 注意：发送长度使用 str_len（刚收到的字节数），而不是 strlen
+        // 因为 UDP 数据可能不是以 '\0' 结尾的字符串，也可能包含二进制数据
+        sendto(serv_sock, message, str_len, 0,
+            (struct sockaddr*)&clnt_addr, clnt_addr_sz);
+    }
 
-  // ⚠️ 注意：由于 while(1) 没有 break，这里理论上不会执行到
-  close(serv_sock);
+    // 关闭套接字（正常情况下这里不会执行到，因为 while(1) 无限循环）
+    close(serv_sock);
 
-  return 0;
+    return 0;
 }
 
-void error_handling(char* message) {
-  // 输出错误信息到标准错误并退出
-  // ⚠️ 这里没有输出 errno 细节（例如 perror），调试时信息可能不够
-  fputs(message, stderr);
-  fputc('\n', stderr);
-  exit(1);
+void error_handling(char *message)
+{
+    // 将错误信息输出到标准错误流 stderr，便于与正常输出区分
+    fputs(message, stderr);
+    fputc('\n', stderr);
+    exit(1); // 非正常退出
 }
