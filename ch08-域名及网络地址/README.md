@@ -4,9 +4,13 @@
 
 略
 
+DNS是对IP地址和域名进行相互转换的系统，其核心是DNS服务器。
+
 ## 2. IP地址和域名之间的转换
 
 ### *1. 程序中有必要使用域名吗？*
+
+在程序中使用域名，通过代码动态获取IP。
 
 IP地址比域名发生变更的概率要高，所以利用IP地址编写程序并非上策。一旦注册域名可能永久不变，因此利用域名编写程序会更好一点。这样，每次运行程序时根据域名获取IP地址，再接入服务器，这样程序就不会依赖于服务器IP地址了。所以说，程序中也需要IP地址和域名之间的转换函数。
 
@@ -25,12 +29,12 @@ struct hostent *gethostbyname(const char *name);
 ```c
 struct hostent
 {
-    char * h_name; // Official name
-    char ** h_aliases; //alias list
-    int h_addrtype; // host address type
-    int h_length; // address length
-    char ** h_addr_list; //address list
-}
+    char * h_name; // 官方主机名（规范主机名）
+    char ** h_aliases; // 主机别名列表（可能有多个别名）
+    int h_addrtype; // 主机地址类型（如 AF_INET 表示IPv4，AF_INET6 表示IPv6）
+    int h_length; // 地址长度（字节数，IPv4为4，IPv6为16）
+    char ** h_addr_list; // 主机IP地址列表（以网络字节序存储）
+};
 ```
 
 下面简要说明上述结构体各成员。
@@ -50,7 +54,7 @@ struct hostent
 - h_addr_list
 这是最重要的成员。通过此变量以整数形式保存域名对应的IP地址。另外，用户较多的网站有可能分配多个IP给同一域名，利用多个服务器进行负载均衡。此时同样可以通过此变量获取IP地址信息。
 
-![hostent](./hostent.png "hostent结构体变量")
+![hostent](./img/hostent.png "hostent结构体变量")
 
 [gethostbyname.c](./gethostbyname.c)
 
@@ -82,4 +86,3 @@ struct hostent *gethostbyaddr(const void *addr,
 - *family* ：传递地址族信息，IPv4 时为AF_INET，IPv6时为AF_INET6。
 
 [gethostbyaddr.c](./gethostbyaddr.c)
-
