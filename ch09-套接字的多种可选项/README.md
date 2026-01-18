@@ -1,30 +1,33 @@
 # ch09 套接字的多种选项
 
+本章深入到套接字的内部，讲解如何读取和更改套接字的各种特性，以便更精细地控制网络通信行为。
+重点掌握：为什么服务器重启会报 Bind Error（Time-wait 造成）以及如何用 SO_REUSEADDR 解决；以及Nagle 算法对延迟的影响及如何用 TCP_NODELAY 进行优化。
+
 ## 1. 套接字可选项和I/O缓冲大小
 
 ### *1. 套接字的多种可选项*
 
 我们之前写的程序都是创建好套接字后直接使用的，此时通过默认的套接字特性进行数据通信。
 
-|协议层|选项名|读取|设置|
-| :-----------: | :---------------------------------: | :--: | :--: |
-|SOL_SOCKET|SO_SNDBUF|O|O|
-||SO_RCVBUF|O|O|
-||SO_REUSEADDR|O|O|
-||SO_KEEPALIVE|O|O|
-||SO_BROADCAST|O|O|
-||SO_DONTROUTE|O|O|
-||SO_OOBINLINE|O|O|
-||SO_ERROR|O|X|
-||SO_TYPE|O|X|
-|IPPROTO_IP|IP_TOS|O|O|
-||IP_TTL|O|O|
-||IP_MULTICAST_TTL|O|O|
-||IP_MULTICAST_LOOP|O|O|
-||IP_MULTICAST_IF|O|O|
-|IPPROTO_TCP|TCP_KEEPALIVE|O|O|
-||TCP_NODELAY|O|O|
-||TCP_MAXSEG|O|O|
+|   协议层    |      选项名       | 读取  | 设置  |
+| :---------: | :---------------: | :---: | :---: |
+| SOL_SOCKET  |     SO_SNDBUF     |   O   |   O   |
+|             |     SO_RCVBUF     |   O   |   O   |
+|             |   SO_REUSEADDR    |   O   |   O   |
+|             |   SO_KEEPALIVE    |   O   |   O   |
+|             |   SO_BROADCAST    |   O   |   O   |
+|             |   SO_DONTROUTE    |   O   |   O   |
+|             |   SO_OOBINLINE    |   O   |   O   |
+|             |     SO_ERROR      |   O   |   X   |
+|             |      SO_TYPE      |   O   |   X   |
+| IPPROTO_IP  |      IP_TOS       |   O   |   O   |
+|             |      IP_TTL       |   O   |   O   |
+|             | IP_MULTICAST_TTL  |   O   |   O   |
+|             | IP_MULTICAST_LOOP |   O   |   O   |
+|             |  IP_MULTICAST_IF  |   O   |   O   |
+| IPPROTO_TCP |   TCP_KEEPALIVE   |   O   |   O   |
+|             |    TCP_NODELAY    |   O   |   O   |
+|             |    TCP_MAXSEG     |   O   |   O   |
 
 从上表可以看出，套接字可选项是分层的。IPPROTO_IP层可选项是IP协议相关事项，IPPROTO_TCP层可选项是TCP协议相关的事项，SOL_SOCKET层是套接字相关的通用可选项。
 
@@ -152,11 +155,11 @@ Input message(Q to quit): q
 
 为防止因数据包过多而发生网络过载，Nagle算法在1984年就诞生了，应用于TCP层。
 
-![Nagle](./Nagle.png "Nagle算法")
+![Nagle](./img/Nagle.png "Nagle算法")
 
 TCP套接字默认使用Nagle算法，因此会最大限度地进行缓冲，直到收到ACK。  
 
-但Nagle算法并不是什么时候都适用。根据传输数据的特性，网络流量未受太大影响时，不使用Nagle算法要比使用它时传输速度更快。最典型的是传输大文件数据时。将文件数据传入输出缓冲不会花太多时间，因此，即便不使用Nagle算法，也会在装满输出缓冲时传输数据包。这不仅不会增加数据包的数量，反而会在无需等待ACK的前提下连续传输，因此可以大大提高传输速度。   
+但Nagle算法并不是什么时候都适用。根据传输数据的特性，网络流量未受太大影响时，不使用Nagle算法要比使用它时传输速度更快。最典型的是传输大文件数据时。将文件数据传入输出缓冲不会花太多时间，因此，即便不使用Nagle算法，也会在装满输出缓冲时传输数据包。这不仅不会增加数据包的数量，反而会在无需等待ACK的前提下连续传输，因此可以大大提高传输速度。
 
 一般情况下，不使用Nagle算法可以提高传输速度。但如果无条件放弃使用Nagle算法，就会增加过多的网络流量，反而会影响传输。因此。未准确判断数据特性时不应禁用Nagle算法。
 
