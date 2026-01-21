@@ -2,11 +2,11 @@
 
 ## 1. 进程的概念及应用
 
-### *1. 两种类型的服务器端*
+### _1. 两种类型的服务器端_
 
 。。。略
 
-### *2. 并发服务器端的实现方法*
+### _2. 并发服务器端的实现方法_
 
 下面列出具有代表性的并发服务器端实现模型和方法。
 
@@ -14,11 +14,11 @@
 - 多路复用服务器：通过捆绑并统一管理I/O对象提供服务
 - 多线程服务器：通过生成与客户端等量的线程提供服务
 
-### *3. 理解进程*
+### _3. 理解进程_
 
 略
 
-### *4. 通过调用 `fork` 函数创建进程*
+### _4. 通过调用 `fork` 函数创建进程_
 
 ```c
 NAME
@@ -38,7 +38,7 @@ pid_t fork(void);
 [fork.c](./fork.c)
 
 ```bash
-lxc@Lxc:~/C/tcpip_src/ch10-多进程服务器端$ bin/fork 
+lxc@Lxc:~/C/tcpip_src/ch10-多进程服务器端$ bin/fork
 Parent Proc: gval: 9, lval: 23
 Child Proc: gval: 13, lval: 27
 # 从运行结果可以看出，调用 fork 函数后，父子进程拥有完全独立的内存结构。
@@ -51,7 +51,7 @@ Child Proc: gval: 13, lval: 27
 - 传递参数并调用 `exit` 函数
 - main 函数中执行 `return` 语句并返回值
 
-向 `exit` 函数传递的参数值和main函数的 `return` 语句返回的值都会传递给操作系统。而操作系统不会销毁子进程，直到把这些值传递给产生该子进程的父进程。处在这种状态下的进程就是僵尸进程。既然如此，此僵尸进程何时被销毁呢？***"应该向创建子进程的父进程传递子进程的 `exit` 参数值或 `return` 语句的返回值"***。如何向操作系统传递这些值呢？操作系统不会主动把这些值传递给父进程。只有父进程主动发起请求时，操作系统才会传递该值。换言之，如果父进程未主动要求获得子进程的结束状态值，操作系统将一直保存，并让子进程长时间处于僵尸状态。  
+向 `exit` 函数传递的参数值和main函数的 `return` 语句返回的值都会传递给操作系统。而操作系统不会销毁子进程，直到把这些值传递给产生该子进程的父进程。处在这种状态下的进程就是僵尸进程。既然如此，此僵尸进程何时被销毁呢？**_"应该向创建子进程的父进程传递子进程的 `exit` 参数值或 `return` 语句的返回值"_**。如何向操作系统传递这些值呢？操作系统不会主动把这些值传递给父进程。只有父进程主动发起请求时，操作系统才会传递该值。换言之，如果父进程未主动要求获得子进程的结束状态值，操作系统将一直保存，并让子进程长时间处于僵尸状态。  
 这个示例将创建僵尸进程。
 
 [zombie.c](./zombie.c)
@@ -72,7 +72,7 @@ int main(int argc, char* argv[])
     else
     {
         // 输出子进程ID，通过该值可以查看子进程状态。
-        printf("Child Process ID: %d\n", pid); 
+        printf("Child Process ID: %d\n", pid);
         // 睡30秒觉，如果父进程终止，处于僵尸状态的子进程将同时销毁。
         // 所以，让父进程睡觉以验证僵尸进程。
         sleep(30);
@@ -82,15 +82,15 @@ int main(int argc, char* argv[])
         puts("End child process");
     else
         puts("End parent process");
-        
+
     return 0;
 }
 ```
 
-*下面是输出：*
+_下面是输出：_
 
 ```bash
-lxc@Lxc:~/C/tcpip_src/ch10-多进程服务器端$ bin/zombie 
+lxc@Lxc:~/C/tcpip_src/ch10-多进程服务器端$ bin/zombie
 Child Process ID: 12510
 Hi! I\'m a child process
 
@@ -105,7 +105,7 @@ lxc        12762  0.0  0.0  14592  3284 pts/2    R+   11:21   0:00 ps au
 # 经过30s后，PID为12509的父进程和僵尸子进程会同时销毁。
 ```
 
-### *1. 销毁僵尸进程1：利用 `wait` 函数*
+### _1. 销毁僵尸进程1：利用 `wait` 函数_
 
 如前所述，为了销毁子进程，父进程应该主动请求获取子进程的返回值。
 
@@ -121,10 +121,10 @@ SYNOPSIS
 
 调用此函数时如果已有子进程终止，那么子进程终止时传递的返回值（`exit` 函数的参数值，`return` 的返回值）将保存到该函数参数所指的内存空间。但函数参数指向的内存单元中还包含其他信息，因此需要以下宏分离。
 
-- `WIFEXITED` 子进程正常终止时返回 true 
+- `WIFEXITED` 子进程正常终止时返回 true
 - `WEXITSTATUS` 返回子进程的返回值
 
-也就是说，向 `wait` 函数传递变量 *wstatus* 的地址时，调用 `wait` 函数后应编写如下代码：
+也就是说，向 `wait` 函数传递变量 _wstatus_ 的地址时，调用 `wait` 函数后应编写如下代码：
 
 ```c
 if(WIFEXIED(wstatus)) // 是正常终止吗？
@@ -147,7 +147,7 @@ Child send two: 7
 # 你可以通过 ps au 查看确认无僵尸进程
 ```
 
-### *2. 销毁僵尸进程2：使用 `waitpid` 函数*
+### _2. 销毁僵尸进程2：使用 `waitpid` 函数_
 
 `wait` 函数会引起程序阻塞，可以考虑使用 `waitpid` 函数。
 
@@ -157,14 +157,14 @@ pid_t waitpid(pid_t pid, int *wstatus, int options);
 // 成功时返回终止的子进程ID（或0），失败时返回-1。
 ```
 
-- *pid* 等待终止的子进程的ID，若传递-1，则等待任意子进程终止；
-- *wstatus*，与 `wait` 函数中的 `wstatus` 同义；
-- *options*，若传递 `WNOHANG`，则即使没有子进程终止也不会进入阻塞状态，而是返回0并退出函数。
+- _pid_ 等待终止的子进程的ID，若传递-1，则等待任意子进程终止；
+- _wstatus_，与 `wait` 函数中的 `wstatus` 同义；
+- _options_，若传递 `WNOHANG`，则即使没有子进程终止也不会进入阻塞状态，而是返回0并退出函数。
 
 [waitpid.c](./waitpid.c)
 
 ```bash
-lxc@Lxc:~/C/tcpip_src/ch10-多进程服务器端$ bin/waitpid 
+lxc@Lxc:~/C/tcpip_src/ch10-多进程服务器端$ bin/waitpid
 sleep 3sec.
 sleep 3sec.
 sleep 3sec.
@@ -180,14 +180,14 @@ Child send 24
 
 父进程往往和子进程一样繁忙，因此不能只调用 `waitpid` 函数以等待子进程终止。接下来讨论解决方案。
 
-### *1. 向操作系统求助*
+### _1. 向操作系统求助_
 
 信号处理（Signal Handling）机制。信号是在特定事件发生时由操作系统向进程发送的消息。为了响应该消息，执行与消息相关的自定义操作的过程称为处理或信号处理。
 
-### *2. 信号与 `signal` 函数*
+### _2. 信号与 `signal` 函数_
 
-- 进程：“嘿，操作系统！如果我之前创建的子进程终止，就帮我调用 *zombie_handler* 函数。”
-- 操作系统：“好的！如果你的子进程终止，我会帮你调用 *zombie_handler* 函数，你先把该函数要执行的语句编写好！”
+- 进程：“嘿，操作系统！如果我之前创建的子进程终止，就帮我调用 _zombie_handler_ 函数。”
+- 操作系统：“好的！如果你的子进程终止，我会帮你调用 _zombie_handler_ 函数，你先把该函数要执行的语句编写好！”
 
 上述对话中进程所讲的相当于“注册信号”过程，即进程发现自己的子进程结束，请求操作系统调用特定函数。该请求通过如下函数调用完成（因此称此函数为信号注册函数）。
 
@@ -205,21 +205,21 @@ SYNOPSIS
 - SIGINT：输入Ctrl+C
 - SIGCHLD：子进程终止
 
-*例如：*
+_例如：_
 
-子进程终止时调用 *mychild* 函数。
+子进程终止时调用 _mychild_ 函数。
 
 ```c
 signal(SIGCHLD, mychild);
 ```
 
-已到 `alarm` 函数注册的时间，调用 *timeout* 函数。
+已到 `alarm` 函数注册的时间，调用 _timeout_ 函数。
 
 ```c
 signal(SIGALRM, timeout);
 ```
 
-输入Ctrl+C时调用 *keycontrol* 函数。
+输入Ctrl+C时调用 _keycontrol_ 函数。
 
 ```c
 signal(SIGINT, keycontrol);
@@ -241,14 +241,14 @@ SYNOPSIS
 [signal.c](./signal.c)
 
 ```bash
-lxc@Lxc:~/C/tcpip_src/ch10-多进程服务器端$ bin/signal 
+lxc@Lxc:~/C/tcpip_src/ch10-多进程服务器端$ bin/signal
 Wait...
 Time out!
 Wait...
 Time out!
 Wait...
 Time out!
-lxc@Lxc:~/C/tcpip_src/ch10-多进程服务器端$ bin/signal 
+lxc@Lxc:~/C/tcpip_src/ch10-多进程服务器端$ bin/signal
 Wait...
 ^C Ctrl+C pressed
 Wait...
@@ -259,7 +259,7 @@ Wait...
 
 调用函数的主体是操作系统，但进程处于休眠状态时无法调用函数。因此，产生信号时，为了调用信号处理器（信号处理函数），将唤醒由于调用 `sleep` 函数而进入阻塞状态的进程。而且，进程一旦被唤醒，就不会再进入休眠状态。即使还未到 `sleep` 函数中规定的时间也是如此。
 
-### *3. 利用 `sigaction` 函数进行信号处理*
+### _3. 利用 `sigaction` 函数进行信号处理_
 
 实际上现在很少使用 `signal` 函数编写程序，它只是为了保持对旧程序的兼容。`signal` 函数在UNIX系列的不同操作系统中可能存在区别，但 `sigaction` 函数完全相同。下面介绍 `sigaction` 函数，不过只会讲解可替换 `signal` 函数的部分。
 
@@ -272,14 +272,14 @@ SYNOPSIS
 // 成功时返回0，失败时返回-1
 ```
 
-- *signum* ：与 `signal` 函数相同，传递信号信息
-- *act* ：对应于第一个参数的信号处理函数的信息
-- *oldact* ：通过此函数获取之前注册的信号处理函数指针，若不需要则传0
+- _signum_ ：与 `signal` 函数相同，传递信号信息
+- _act_ ：对应于第一个参数的信号处理函数的信息
+- _oldact_ ：通过此函数获取之前注册的信号处理函数指针，若不需要则传0
 
 `sigaction` 结构体定义如下：
 
 ```c
-struct sigaction 
+struct sigaction
 {
     void     (*sa_handler)(int);
     // void     (*sa_sigaction)(int, siginfo_t *, void *) ; 忽略
@@ -289,12 +289,12 @@ struct sigaction
 };
 ```
 
-*sa_handler* 成员保存信号处理函数的指针值。*sa_mask* 和 *sa_flags* 的所有位均初始化为0即可。这两个成员用于指定信号相关的选项和特性，而我们的目的主要是防止产生僵尸进程，故省略。
+_sa_handler_ 成员保存信号处理函数的指针值。_sa_mask_ 和 _sa_flags_ 的所有位均初始化为0即可。这两个成员用于指定信号相关的选项和特性，而我们的目的主要是防止产生僵尸进程，故省略。
 
 [sigaction.c](./sigaction.c)
 
 ```bash
-lxc@Lxc:~/C/tcpip_src/ch10-多进程服务器端$ bin/sigaction 
+lxc@Lxc:~/C/tcpip_src/ch10-多进程服务器端$ bin/sigaction
 Wait...
 Time out!
 Wait...
@@ -303,14 +303,14 @@ Wait...
 Time out!
 ```
 
-### *4. 利用信号处理技术消灭僵尸进程*
+### _4. 利用信号处理技术消灭僵尸进程_
 
 子进程终止时将产生 `SIGCHLD` 信号，知道这一点就很容易完成。接下来利用 `sigaction` 函数编写示例。
 
 [remove_zombie.c](./remove_zombie.c)
 
 ```bash
-lxc@Lxc:~/C/tcpip_src/ch10-多进程服务器端$ bin/remove_zombie 
+lxc@Lxc:~/C/tcpip_src/ch10-多进程服务器端$ bin/remove_zombie
 Child proc id: 8491
 Child proc id: 8492
 Wait...
@@ -328,11 +328,40 @@ Wait...
 
 ## 4. 基于多任务的并发服务器
 
-### *1. 基于进程的并发服务器模型*
+### _1. 基于进程的并发服务器模型_
 
-![](./serv.png "并发服务器模型")
+![](./serv.png '并发服务器模型')
 
-### *2. 实现并发服务器*
+基于进程的并发服务器模型（Process-based Concurrent Server）的核心思想是：每当有客户端请求连接时，服务器（父进程）就创建一个新的子进程，专门负责向该客户端提供服务。
+
+这种模型让服务器能够同时处理多个客户端的请求，而不会因为服务某一个客户端而阻塞其他人的连接。
+
+具体工作流程如下：
+
+#### 核心流程（三步走）
+
+1. 第一阶段（受理连接）：
+   - 回声服务器端（父进程）调用 accept 函数，受理客户端的连接请求。
+   - 此时，父进程获得了一个用于数据交换的客户端套接字文件描述符。
+2. 第二阶段（创建进程）:
+   - 父进程调用 fork 函数创建子进程。
+   - 关键点：子进程会复制父进程拥有的所有资源，包括刚才获取的套接字文件描述符。
+3. 第三阶段（提供服务）：
+   - 子进程：利用复制过来的客户端套接字，向客户端提供服务（如回声服务）。
+   - 父进程：继续回到 accept 调用处，等待下一个客户端的连接请求。
+
+#### 关键细节：文件描述符的管理
+
+- 复制的是描述符，不是套接字：调用 fork 后，父进程和子进程各有一个文件描述符指向同一个套接字。
+- 必须分别关闭：
+  - 父进程：必须关闭客户端套接字（因为这部分工作交给子进程了，如果不关闭，连接永远断不开）。
+  - 子进程：必须关闭服务器端（监听）套接字（因为它只负责服务当前的客户端，不需要负责监听新连接）。
+- 只有当指向同一个套接字的所有文件描述符都关闭时，操作系统才会真正销毁该套接字。
+
+父进程：只负责“接待”（accept），接待完立刻交给子进程，自己回去继续等新客人。
+子进程：只负责“服务”（read/write），服务完就销毁。
+
+### _2. 实现并发服务器_
 
 [echo_mpserv.c](./echo_mpserver.c)
 
@@ -350,29 +379,29 @@ lxc@Lxc:~/C/tcpip_src/ch10-多进程服务器端$ bin/echo_mpclient 127.0.0.1 99
 Message from server: 456
 ```
 
-### *3. 通过 `fork` 函数复制文件描述符*
+### _3. 通过 `fork` 函数复制文件描述符_
 
-*echo_mpserv.c* 中的 `fork` 函数调用过程如下图所示。调用 `fork` 函数后，2个文件描述符指向同一套接字。
+_echo_mpserv.c_ 中的 `fork` 函数调用过程如下图所示。调用 `fork` 函数后，2个文件描述符指向同一套接字。
 
-![](./fork.png "调用fork并复制文件描述符的过程")
+![](./fork.png '调用fork并复制文件描述符的过程')
 
 1个套接字中存在2个文件描述符时，只有2个文件描述符都销毁后，才能销毁套接字。因此，调用 `fork` 函数后，要将无关的套接字关掉。如下图所示：
 
-![](./tt1.png "整理复制的文件描述符")
+![](./tt1.png '整理复制的文件描述符')
 
-为了将文件描述符整理成图10-4的形式，示例 *echo_mpserv.c* 的第64行和第73行调用了 `close` 函数。
+为了将文件描述符整理成图10-4的形式，示例 _echo_mpserv.c_ 的第64行和第73行调用了 `close` 函数。
 
 ## 5. 分割TCP的I/O程序
 
-### *1. 分割TCP的I/O程序*
+### _1. 分割TCP的I/O程序_
 
-*echo_client.c* 的数据回声方式如下："向服务器端传递数据并等待服务器端回复，无条件等待，直到接收完服务器端的回声数据后，才能传递下一批数据"。现在可以创建多个进程，因此可以分割数据收发过程，提高频繁交换数据的程序性能。如图10-5所示：
+_echo_client.c_ 的数据回声方式如下："向服务器端传递数据并等待服务器端回复，无条件等待，直到接收完服务器端的回声数据后，才能传递下一批数据"。现在可以创建多个进程，因此可以分割数据收发过程，提高频繁交换数据的程序性能。如图10-5所示：
 
-![](./clnt.png "回声服务器端I/O分割模型")
+![](./clnt.png '回声服务器端I/O分割模型')
 
-![](./clnt2.png "数据交换方法比较")
+![](./clnt2.png '数据交换方法比较')
 
-### *2. 回声客户端的I/O程序分割*
+### _2. 回声客户端的I/O程序分割_
 
 [echo_mpclient.c](./echo_mpclient.c)
 
@@ -384,44 +413,44 @@ lxc@Lxc:~/C/tcpip_src/ch10-多进程服务器端$ cat -n echo_mpclient.c | sed '
  4 #include <unistd.h>
  5 #include <arpa/inet.h>
  6 #include <sys/socket.h>
- 7 
+ 7
  8 #define BUF_SIZE 30
  9 void error_handling(char *message);
 10 void read_routine(int sock, char *buf);
 11 void write_routine(int sock, char *buf);
-12 
+12
 13 int main(int argc, char* argv[])
 14 {
 15     int serv_sock;
 16     struct sockaddr_in serv_addr;
 17     pid_t pid;
 18     char buf[BUF_SIZE];
-19 
+19
 20     if(argc != 3)
 21     {
 22         printf("Usage: %s <IP> <port>\n", argv[0]);
 23         exit(1);
 24     }
-25 
+25
 26     serv_sock = socket(PF_INET, SOCK_STREAM, 0);
 27     memset(&serv_addr, 0, sizeof(serv_addr));
 28     serv_addr.sin_family = AF_INET;
 29     serv_addr.sin_addr.s_addr = inet_addr(argv[1]);
 30     serv_addr.sin_port = htons(atoi(argv[2]));
-31 
+31
 32     if(connect(serv_sock, (struct sockaddr*)&serv_addr, sizeof(serv_addr)) == -1)
 33         error_handling("connect() error");
-34     
+34
 35     pid = fork();
 36     if(pid == 0)
 37         read_routine(serv_sock, buf);
 38     else
 39         write_routine(serv_sock, buf);
-40 
+40
 41     close(serv_sock);
 42     return 0;
 43 }
-44 
+44
 45 void read_routine(int sock, char* buf)
 46 {
 47     while (1)
@@ -429,12 +458,12 @@ lxc@Lxc:~/C/tcpip_src/ch10-多进程服务器端$ cat -n echo_mpclient.c | sed '
 49         int str_len = read(sock, buf, BUF_SIZE);
 50         if (str_len == 0)
 51             return;
-52         
+52
 53         buf[str_len] = 0;
 54         printf("Message from server: %s\n", buf);
 55     }
 56 }
-57 
+57
 58 void write_routine(int sock, char* buf)
 59 {
 60     while (1)
@@ -448,7 +477,7 @@ lxc@Lxc:~/C/tcpip_src/ch10-多进程服务器端$ cat -n echo_mpclient.c | sed '
 68         write(sock, buf, strlen(buf));
 69     }
 70 }
-71 
+71
 72 void error_handling(char *message)
 73 {
 74     fputs(message, stderr);
