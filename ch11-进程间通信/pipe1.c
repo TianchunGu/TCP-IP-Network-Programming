@@ -1,24 +1,70 @@
-#include <stdio.h>
-#include <unistd.h>
-#define BUF_SIZE 30
+#include <stdio.h>      // 标准输入输出：puts
+#include <unistd.h>     // POSIX：pipe / fork / read / write 等系统调用
+
+#define BUF_SIZE 30     // 缓冲区大小：父进程最多从管道读取 30 字节
 
 int main(int argc, char* argv[])
 {
-    int fds[2];
-    char str[] = "Who are you?";
-    char buf[BUF_SIZE];
-    pid_t pid;
+    int fds[2];                  // 管道的两个端点（文件描述符）
+                                 // fds[0]：读端（read end）
+                                 // fds[1]：写端（write end）
+    char str[] = "Who are you?"; // 要发送的字符串：以字符数组形式存储，包含末尾 '\0'
+    char buf[BUF_SIZE];          // 接收缓冲区：用于从管道读取数据
+    pid_t pid;                   // fork 返回值：用于区分父进程与子进程
 
+    // pipe(fds)：创建一个匿名管道（用于进程间通信，单向字节流）
+    // - 创建成功后，fds[0]/fds[1] 指向同一个管道对象的读端/写端
+    // - 管道通常用于具有亲缘关系的进程通信（例如 fork 后的父子进程）
+    // 注意：此处未检查 pipe 返回值，真实工程中应判断是否成功
     pipe(fds);
+
+    // fork：创建子进程
+    // 返回值 pid：
+    // - 子进程中 pid == 0
+    // - 父进程中 pid > 0（为子进程 PID）
+    // - 失败 pid < 0（本示例未处理失败情况）
     pid = fork();
+
     if(pid == 0)
     {
+        // -------------------- 子进程分支：向管道写数据 --------------------
+        // write(fds[1], str, sizeof(str))：
+        // - fds[1] 是管道写端
+        // - str 是要写入的数据起始地址
+        // - sizeof(str) 是整个字符数组长度（包含结尾 '\0'）
+        //
+        // 因为写入包含 '\0'，父进程读出后可以直接 puts(buf) 当作 C 字符串输出。
+        //
+        // 说明（更严谨的做法）：
+        // - 子进程通常会 close(fds[0]) 关闭不用的读端；
+        // - 写完后也可 close(fds[1]) 表示写入结束，便于对端读到 EOF；
+        // 本示例为了简洁省略 close。
         write(fds[1], str, sizeof(str));
     }
     else
     {
+        // -------------------- 父进程分支：从管道读数据并输出 --------------------
+        // read(fds[0], buf, BUF_SIZE)：
+        // - fds[0] 是管道读端
+        // - buf 为接收缓冲区
+        // - BUF_SIZE 为最多读取字节数
+        //
+        // read 的返回值是实际读取到的字节数：
+        // - >0：成功读取到数据
+        // - 0 ：读到 EOF（所有写端都关闭且数据已读完）
+        // - -1：出错
+        // 本示例未保存/检查返回值，属于教学简化写法。
+        //
+        // 因为子进程写入时包含 '\0'，buf 中会包含字符串结束符，
+        // 所以 puts(buf) 能正确输出字符串。
         read(fds[0], buf, BUF_SIZE);
+
+        // puts：输出字符串，并自动追加一个换行符
         puts(buf);
+
+        // 说明（更严谨的做法）：
+        // - 父进程通常会 close(fds[1]) 关闭不用的写端；
+        // - 并可根据 read 返回的长度手动补 '\0'（若写入数据不保证包含 '\0'）。
     }
 
     return 0;
