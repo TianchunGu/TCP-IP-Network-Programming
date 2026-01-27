@@ -92,7 +92,7 @@ int main(int argc, char* argv[])
             // FD_ISSET(i, &cpy_reads)：判断 fd=i 是否就绪（可读）
             if(FD_ISSET(i, &cpy_reads))
             {
-                if(i == serv_sock)
+                if(i == serv_sock)//i是服务器监听套接字，表示有新客户端来请求连接了
                 {
                     // -------------------- 监听套接字就绪：有新连接到来 --------------------
                     addr_sz = sizeof(clnt_addr);
@@ -111,7 +111,7 @@ int main(int argc, char* argv[])
                     // 打印该客户端连接对应的文件描述符（便于观察）
                     printf("Connected client: %d\n", clnt_sock);
                 }
-                else
+                else//是客户端套接字 (i != serv_sock)，已经连接的客户端发消息来了。
                 {
                     // -------------------- 客户端套接字就绪：可读（有数据到达或对端关闭） --------------------
                     // 从该客户端读取数据（最多 BUF_SIZE 字节）

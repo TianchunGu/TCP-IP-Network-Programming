@@ -3,6 +3,8 @@
 #include <sys/time.h>    // 时间结构：struct timeval
 #include <sys/select.h>  // I/O 多路复用：select / fd_set / FD_* 宏
 
+// 程序功能：监视标准输入（控制台），如果在 5 秒内有输入就打印出来，否则提示超时。
+
 #define BUF_SIZE 30      // 从控制台读取数据的缓冲区大小（最多读取 30 字节）
 
 int main(int argc, char* argv[])
