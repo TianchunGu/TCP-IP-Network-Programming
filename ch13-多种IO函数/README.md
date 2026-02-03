@@ -42,13 +42,13 @@ SYNOPSIS
 
 可选项可以通过位或同时传递多个信息。下表展示了部分可选项信息。
 
-|可选项(Option)|含义|send|recv|
-| :--------------: | :---------------------------------------------: | :--: | :---: |
-|MSG_OOB|用于传输带外数据（out-of-band data）|1|1|
-|MSG_PEEK|验证输入缓冲中是否存在接收的数据|0|1|
-|MSG_DONTROUTE|数据传输过程中，不参照路由表，在本地网络中寻找目的地|1|0|
-|MSG_DONTWAIT|调用I/O函数时不阻塞，用于使用非阻塞（Non-blocking）I/O|1|1|
-|MSG_WAITALL|防止函数返回，直接接收全部请求的字节数|0|1|
+| 可选项(Option) |                          含义                          | send  | recv  |
+| :------------: | :----------------------------------------------------: | :---: | :---: |
+|    MSG_OOB     |          用于传输带外数据（out-of-band data）          |   1   |   1   |
+|    MSG_PEEK    |            验证输入缓冲中是否存在接收的数据            |   0   |   1   |
+| MSG_DONTROUTE  |  数据传输过程中，不参照路由表，在本地网络中寻找目的地  |   1   |   0   |
+|  MSG_DONTWAIT  | 调用I/O函数时不阻塞，用于使用非阻塞（Non-blocking）I/O |   1   |   1   |
+|  MSG_WAITALL   |         防止函数返回，直接接收全部请求的字节数         |   0   |   1   |
 
 在上表中，1表示该函数支持该可选项，0表示不支持。为了方便这样列到了一起。不同操作系统中对上述可选项的支持也不同。
 
@@ -276,8 +276,8 @@ SYNOPSIS
 ```c
 struct iovec
 {
-    void *iov_base;	/* Pointer to data.  */
-    size_t iov_len;	/* Length of data.  */
+    void *iov_base; /* Pointer to data.  */
+    size_t iov_len; /* Length of data.  */
 };
 ```
 
