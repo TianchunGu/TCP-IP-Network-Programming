@@ -70,7 +70,7 @@ int main(int argc, char* argv[])
     /*
      * bind：把监听 socket 绑定到本地 IP:端口
      * 典型失败原因：
-     * - 端口被占用（Address already in use）
+     * - 端口被占用（Address already in use） 
      * - 权限不足（绑定 < 1024 端口需要管理员权限）
      */
     if(bind(serv_sock, (struct sockaddr*)&serv_addr, sizeof(serv_addr)) == -1)

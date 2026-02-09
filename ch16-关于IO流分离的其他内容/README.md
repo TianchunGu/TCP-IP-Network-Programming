@@ -38,41 +38,41 @@ lxc@Lxc:~/C/tcpip_src/ch16-关于IO流分离的其他内容$ cat -n sep_serv.c |
  8 
  9 int main(int argc, char *argv[])
 10 {
-11 	int serv_sock, clnt_sock;
-12 	FILE *readfp;
-13 	FILE *writefp;
+11  int serv_sock, clnt_sock;
+12  FILE *readfp;
+13  FILE *writefp;
 14 
-15 	struct sockaddr_in serv_adr, clnt_adr;
-16 	socklen_t clnt_adr_sz;
-17 	char buf[BUF_SIZE] = {
-18 		0,
-19 	};
+15  struct sockaddr_in serv_adr, clnt_adr;
+16  socklen_t clnt_adr_sz;
+17  char buf[BUF_SIZE] = {
+18   0,
+19  };
 20 
-21 	serv_sock = socket(PF_INET, SOCK_STREAM, 0);
-22 	memset(&serv_adr, 0, sizeof(serv_adr));
-23 	serv_adr.sin_family = AF_INET;
-24 	serv_adr.sin_addr.s_addr = htonl(INADDR_ANY);
-25 	serv_adr.sin_port = htons(atoi(argv[1]));
+21  serv_sock = socket(PF_INET, SOCK_STREAM, 0);
+22  memset(&serv_adr, 0, sizeof(serv_adr));
+23  serv_adr.sin_family = AF_INET;
+24  serv_adr.sin_addr.s_addr = htonl(INADDR_ANY);
+25  serv_adr.sin_port = htons(atoi(argv[1]));
 26 
-27 	bind(serv_sock, (struct sockaddr *)&serv_adr, sizeof(serv_adr));
-28 	listen(serv_sock, 5);
-29 	clnt_adr_sz = sizeof(clnt_adr);
-30 	clnt_sock = accept(serv_sock, (struct sockaddr *)&clnt_adr, &clnt_adr_sz);
+27  bind(serv_sock, (struct sockaddr *)&serv_adr, sizeof(serv_adr));
+28  listen(serv_sock, 5);
+29  clnt_adr_sz = sizeof(clnt_adr);
+30  clnt_sock = accept(serv_sock, (struct sockaddr *)&clnt_adr, &clnt_adr_sz);
 31 
-32 	readfp = fdopen(clnt_sock, "r");
-33 	writefp = fdopen(clnt_sock, "w");
+32  readfp = fdopen(clnt_sock, "r");
+33  writefp = fdopen(clnt_sock, "w");
 34 
-35 	fputs("FROM SERVER: Hi~ client? \n", writefp);
-36 	fputs("I love all of the world \n", writefp);
-37 	fputs("You are awesome! \n", writefp);
-38 	fflush(writefp);
+35  fputs("FROM SERVER: Hi~ client? \n", writefp);
+36  fputs("I love all of the world \n", writefp);
+37  fputs("You are awesome! \n", writefp);
+38  fflush(writefp);
 39 
-40 	fclose(writefp);
-41 	fgets(buf, sizeof(buf), readfp);
-42 	fputs(buf, stdout);
-43 	fclose(readfp);
-44 	
-45 	return 0;
+40  fclose(writefp);
+41  fgets(buf, sizeof(buf), readfp);
+42  fputs(buf, stdout);
+43  fclose(readfp);
+44  
+45  return 0;
 46 }
 ```
 
@@ -95,37 +95,37 @@ lxc@Lxc:~/C/tcpip_src/ch16-关于IO流分离的其他内容$ cat -n sep_serv.c |
  8 
  9 int main(int argc, char *argv[])
 10 {
-11 	int sock;
-12 	char buf[BUF_SIZE];
-13 	struct sockaddr_in serv_addr;
+11  int sock;
+12  char buf[BUF_SIZE];
+13  struct sockaddr_in serv_addr;
 14 
-15 	FILE *readfp;
-16 	FILE *writefp;
+15  FILE *readfp;
+16  FILE *writefp;
 17 
-18 	sock = socket(PF_INET, SOCK_STREAM, 0);
-19 	memset(&serv_addr, 0, sizeof(serv_addr));
-20 	serv_addr.sin_family = AF_INET;
-21 	serv_addr.sin_addr.s_addr = inet_addr(argv[1]);
-22 	serv_addr.sin_port = htons(atoi(argv[2]));
+18  sock = socket(PF_INET, SOCK_STREAM, 0);
+19  memset(&serv_addr, 0, sizeof(serv_addr));
+20  serv_addr.sin_family = AF_INET;
+21  serv_addr.sin_addr.s_addr = inet_addr(argv[1]);
+22  serv_addr.sin_port = htons(atoi(argv[2]));
 23 
-24 	connect(sock, (struct sockaddr *)&serv_addr, sizeof(serv_addr));
-25 	readfp = fdopen(sock, "r");
-26 	writefp = fdopen(sock, "w");
+24  connect(sock, (struct sockaddr *)&serv_addr, sizeof(serv_addr));
+25  readfp = fdopen(sock, "r");
+26  writefp = fdopen(sock, "w");
 27 
-28 	while (1)
-29 	{
-30 		if (fgets(buf, sizeof(buf), readfp) == NULL)
-31 			break;
-32 		fputs(buf, stdout);
-33 		fflush(stdout);
-34 	}
+28  while (1)
+29  {
+30   if (fgets(buf, sizeof(buf), readfp) == NULL)
+31    break;
+32   fputs(buf, stdout);
+33   fflush(stdout);
+34  }
 35 
-36 	fputs("FROM CLIENT: Thank you! \n", writefp);
-37 	fflush(writefp);
-38 	fclose(writefp);
-39 	fclose(readfp);
-40 	
-41 	return 0;
+36  fputs("FROM CLIENT: Thank you! \n", writefp);
+37  fflush(writefp);
+38  fclose(writefp);
+39  fclose(readfp);
+40  
+41  return 0;
 42 }
 ```
 
@@ -191,6 +191,8 @@ You are awesome!
 
 ### *3. `dup` & `dup2`*
 
+为了访问同一个文件或套接字，再创建一个新的整数编号（描述符）。
+
 ```c
 SYNOPSIS
        #include <unistd.h>
@@ -231,40 +233,40 @@ Hi~
  8 
  9 int main(int argc, char *argv[])
 10 {
-11 	int serv_sock, clnt_sock;
-12 	FILE * readfp;
-13 	FILE * writefp;
-14 	
-15 	struct sockaddr_in serv_adr, clnt_adr;
-16 	socklen_t clnt_adr_sz;
-17 	char buf[BUF_SIZE]={0,};
+11  int serv_sock, clnt_sock;
+12  FILE * readfp;
+13  FILE * writefp;
+14  
+15  struct sockaddr_in serv_adr, clnt_adr;
+16  socklen_t clnt_adr_sz;
+17  char buf[BUF_SIZE]={0,};
 18 
-19 	serv_sock=socket(PF_INET, SOCK_STREAM, 0);
-20 	memset(&serv_adr, 0, sizeof(serv_adr));
-21 	serv_adr.sin_family=AF_INET;
-22 	serv_adr.sin_addr.s_addr=htonl(INADDR_ANY);
-23 	serv_adr.sin_port=htons(atoi(argv[1]));
-24 	
-25 	bind(serv_sock, (struct sockaddr*) &serv_adr, sizeof(serv_adr));
-26 	listen(serv_sock, 5);
-27 	clnt_adr_sz=sizeof(clnt_adr); 
-28 	clnt_sock=accept(serv_sock, (struct sockaddr*)&clnt_adr,&clnt_adr_sz);
-29 	
-30 	readfp=fdopen(clnt_sock, "r");
-31 	writefp=fdopen(dup(clnt_sock), "w");
-32 	
-33 	fputs("FROM SERVER: Hi~ client? \n", writefp);
-34 	fputs("I love all of the world \n", writefp);
-35 	fputs("You are awesome! \n", writefp);
-36 	fflush(writefp);
-37 	
-38 	shutdown(fileno(readfp), SHUT_WR); // 注意这一行，也可以改成下面注释的那一行。
-39 	// shutdown(fileno(writefp), SHUT_WR);
-40 	fclose(writefp);
-41 	
-42 	fgets(buf, sizeof(buf), readfp); fputs(buf, stdout); 
-43 	fclose(readfp);
-44 	return 0;
+19  serv_sock=socket(PF_INET, SOCK_STREAM, 0);
+20  memset(&serv_adr, 0, sizeof(serv_adr));
+21  serv_adr.sin_family=AF_INET;
+22  serv_adr.sin_addr.s_addr=htonl(INADDR_ANY);
+23  serv_adr.sin_port=htons(atoi(argv[1]));
+24  
+25  bind(serv_sock, (struct sockaddr*) &serv_adr, sizeof(serv_adr));
+26  listen(serv_sock, 5);
+27  clnt_adr_sz=sizeof(clnt_adr); 
+28  clnt_sock=accept(serv_sock, (struct sockaddr*)&clnt_adr,&clnt_adr_sz);
+29  
+30  readfp=fdopen(clnt_sock, "r");
+31  writefp=fdopen(dup(clnt_sock), "w");
+32  
+33  fputs("FROM SERVER: Hi~ client? \n", writefp);
+34  fputs("I love all of the world \n", writefp);
+35  fputs("You are awesome! \n", writefp);
+36  fflush(writefp);
+37  
+38  shutdown(fileno(readfp), SHUT_WR); // 注意这一行，也可以改成下面注释的那一行。
+39  // shutdown(fileno(writefp), SHUT_WR);
+40  fclose(writefp);
+41  
+42  fgets(buf, sizeof(buf), readfp); fputs(buf, stdout); 
+43  fclose(readfp);
+44  return 0;
 45 }
 ```
 
